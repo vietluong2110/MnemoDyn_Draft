@@ -1,0 +1,14 @@
+2026-02-20 22:31:47 INFO     Experiment directory: Result/ABIDE_classification_450_normal/Results/0
+2026-02-20 22:31:47 INFO     Arguments: {'foundation_dir': '/mnt/vhluong/Result/Orion_450_ukbiobank/debug_GordonHCP/', 'version': 2, 'normalize': 'minmax', 'duration': 1, 'seq_length': 490, 'seed': 2023, 'exp': 'Result/ABIDE_classification_450_normal/Results/0', 'dim_D': 7, 'num_classes': 2, 'interpol': 'spline', 'train_bs': 8, 'valid_bs': 256, 'test_bs': 4, 'epoch': 100, 'lr': 0.001, 'wd': 0.0001, 'model_pred_save_freq': 10}
+2026-02-20 22:31:47 INFO     First run: creating hyperparameter log Result/ABIDE_classification_450_normal/experiment.csv
+2026-02-20 22:31:47 INFO     Seed set to 2023
+2026-02-20 22:31:47 INFO     Time step tensor shape: (490,)
+2026-02-20 22:31:47 INFO     Loading checkpoint /mnt/vhluong/Result/Orion_450_ukbiobank/debug_GordonHCP/version_2/checkpoints/model-epoch=29-val_mae=0.0002.ckpt
+2026-02-20 22:31:54 INFO     Loading metadata from /mnt/vhluong/abide_paths_labels.csv
+2026-02-20 22:31:54 INFO     Metadata entries after filtering: 416
+2026-02-20 22:31:56 INFO     Valid files: 416
+2026-02-20 22:31:56 INFO     Total files loaded: 416
+2026-02-20 22:31:56 INFO     Train/Test split: 332/84
+2026-02-20 22:32:07 INFO     Train dataset size: 332
+2026-02-20 22:32:09 INFO     Test dataset size: 84
+2026-02-20 22:32:11 INFO     Data normalization (robust_scaler) applied

@@ -22,7 +22,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import logging
-from main import LitORionModelOptimized
+from model.main import LitORionModelOptimized
 
 from plot_save import plot_and_save, manual_set_seed
 

@@ -12,8 +12,8 @@ import torch.utils.checkpoint as checkpoint
 import torch.utils.benchmark as benchmark
 
 from pytorch_wavelets import DWT1DForward, DWT1DInverse
-from conv1d_optimize import VmapRegionConv1D
-from dense_layer import PerChannelDenseEinsum
+from .conv1d_optimize import VmapRegionConv1D
+from .dense_layer import PerChannelDenseEinsum
 import torchcde
 import pdb
 import time as sys_time
