@@ -33,7 +33,7 @@ from main import LitORionModelOptimized
 from sklearn.preprocessing import LabelEncoder
 import logging
 from sklearn.model_selection import train_test_split
-from normalizer import Normalizer_classification
+from model.normalizer import Normalizer
 from hcp_dataset_450 import  HCPA_Dataset, load_hcp_aging_parcellated_list, HCPADataModule
 def parse_args():
 	'''
@@ -206,7 +206,7 @@ def main():
 		num_parcels=450,
 	)
 	logger.info("Test dataset size: %d", len(test_dataset))
-	normalizer = Normalizer_classification(lit.hparams.normalize)
+	normalizer = Normalizer(lit.hparams.normalize)
 	normalizer.fit(train_dataset.data)
 	train_dataset.data = normalizer.transform(train_dataset.data)
 	test_dataset.data = normalizer.transform(test_dataset.data)

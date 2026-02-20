@@ -24,7 +24,7 @@ from torch.utils.data import DataLoader
 import logging
 
 from model.main import LitORionModelOptimized
-from model.normalizer import Normalizer_classification
+from model.normalizer import Normalizer
 from plot_save import plot_and_save, manual_set_seed
 
 import os, glob

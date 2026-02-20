@@ -1,1 +1,0 @@
-python classification.py --foundation-dir /home/vhluong/media/vhluong_nas/Result/high_dim_BCR/robust_scaler_d8_k64_sLC5_spline_Kden32_denR8_LCR4_GordonHCP --version version_0 

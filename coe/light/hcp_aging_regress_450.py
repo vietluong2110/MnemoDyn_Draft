@@ -34,7 +34,7 @@ import logging
 from sklearn.preprocessing  import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
-from normalizer import Normalizer_classification
+from model.normalizer import Normalizer
 from hcp_dataset_450 import HCPA_Dataset, load_hcp_aging_parcellated_list, HCPADataModule
 def parse_args():
 	'''
@@ -222,7 +222,7 @@ def main():
 	)
 	logger.info("Test dataset size: %d", len(test_dataset))
 
-	normalizer = Normalizer_classification(lit.hparams.normalize)
+	normalizer = Normalizer(lit.hparams.normalize)
 	normalizer.fit(train_dataset.data)
 	train_dataset.data = normalizer.transform(train_dataset.data)
 	test_dataset.data = normalizer.transform(test_dataset.data)

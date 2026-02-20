@@ -1,7 +1,7 @@
 import torch 
 import numpy as np 
 
-class Normalizer_classification:
+class Normalizer:
     def __init__(self, method='standard'):
         self.scalers = []
         self.method = method

@@ -27,7 +27,7 @@ from main import LitORionModelOptimized
 from plot_save import plot_and_save, manual_set_seed
 
 import os, glob
-from normalizer import Normalizer_classification
+from model.normalizer import Normalizer
 from abide_dataset import ABIDE_Dataset, load_abide_file_list
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import f1_score
@@ -204,7 +204,7 @@ def main():
     )
     logger.info("Test dataset size: %d", len(test_dataset))
     # ─── Normalize (optional) ───────────────────────────────────────────────────────
-    normalizer = Normalizer_classification(lit.hparams.normalize)
+    normalizer = Normalizer(lit.hparams.normalize)
     normalizer.fit(train_dataset.data)
     normalizer.transform(train_dataset.data)
     normalizer.transform(test_dataset.data)
