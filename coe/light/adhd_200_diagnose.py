@@ -22,7 +22,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import logging
-from main import LitORionModelOptimized
+from model.main import LitORionModelOptimized
+
+from model.normalizer import Normalizer
 
 from plot_save import plot_and_save, manual_set_seed
 
@@ -62,7 +64,7 @@ def parse_args():
                         help='Normalization type: standard (zero mean, unit variance) or minmax (0-1 range)')
     parser.add_argument('--duration', default=1, type=float, help="Time duration of time series")
     # arguments for dataset
-    parser.add_argument('--seq_length', type=int, default=1200, help='Total seqeunce length in time series')
+    parser.add_argument('--seq_length', type=int, default=490, help='Total seqeunce length in time series')
     parser.add_argument("--seed", default=4741, type=int, help="Setting seed for the entire experiment")
     parser.add_argument("--exp", default='ADHD_Diagnose_450_4_Times', help="Adjusted in code: Experiment foler name")
     parser.add_argument('--dim_D', default=7, type=int, help="Dimension of observable variable")
@@ -153,8 +155,6 @@ def main():
     lit = LitORionModelOptimized.load_from_checkpoint(ckpt_path, map_location=device)
     lit.eval()
     foundation = lit.model.to(device)
-    ema_state = torch.load(f"{version_dir}/ema_best_val_mse.pt", map_location=device)
-    foundation.load_state_dict(ema_state, strict=True)  # load EMA params
     for p in foundation.parameters():
         p.requires_grad = False
     # ─── Load file list & metadata CSV ───────────────────────────────────────────
@@ -206,7 +206,7 @@ def main():
     )
     logger.info("Test dataset size: %d", len(test_dataset))
     # ─── Normalize (optional) ───────────────────────────────────────────────────────
-    normalizer = Normalizer_update(lit.hparams.normalize)
+    normalizer = Normalizer(lit.hparams.normalize)
     normalizer.fit(train_dataset.data)
     normalizer.transform(train_dataset.data)
     normalizer.transform(test_dataset.data)
@@ -276,7 +276,7 @@ def main():
             x, coeffs, y_true, time = x.to(device).float(), coeffs.to(device).float(), y_true.to(device), time.to(device).float()
             
             with torch.no_grad():
-                U, _ = foundation(x, coeffs, time)  # [B, T, dim_D_out]
+                U = foundation(x, coeffs, time)  # [B, T, dim_D_out]
            
             features = U[:, -1, :]        
             y_pred = regression_head(features)
@@ -317,7 +317,7 @@ def main():
                 x, coeffs, y_true, time = x.to(device).float(), coeffs.to(device).float(), y_true.to(device), time.to(device).float()
                 # x_pred, y_pred = model(x, coeffs, time_step)
                 with torch.no_grad():
-                    U, _ = foundation(x, coeffs, time)  # [B, T, dim_D_out]
+                    U = foundation(x, coeffs, time)  # [B, T, dim_D_out]
                 # features = U[:, -1, :]                     # take final time-step
                 # features = torch.mean(U, dim = 1)
                 # y_pred = regression_head(features)         # [B, 1]

@@ -22,8 +22,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import logging
-# from main_masked_autoencode_jepa import LitORionModelOptimized
 from plot_save import plot_and_save, manual_set_seed
+from model.main import LitORionModelOptimized
+from model.normalizer import Normalizer 
 
 import os, glob
 from adhd_dataset import ADHD_Dataset, load_adhd_file_list
@@ -58,7 +59,7 @@ def parse_args():
                         help='Normalization type: standard (zero mean, unit variance) or minmax (0-1 range)')
     parser.add_argument('--duration', default=1, type=float, help="Time duration of time series")
 
-    parser.add_argument('--seq_length', type=int, default=1200, help='Total seqeunce length in time series')
+    parser.add_argument('--seq_length', type=int, default=490, help='Total seqeunce length in time series')
 
     parser.add_argument("--seed", default=4741, type=int, help="Setting seed for the entire experiment")
     parser.add_argument("--exp", default='ADHD_Sex_CLS', help="Adjusted in code: Experiment foler name")
@@ -218,7 +219,7 @@ def main():
     )
     logger.info("Test dataset size: %d", len(test_dataset))
     # ─── Normalize (optional) ───────────────────────────────────────────────────────
-    normalizer = Normalizer_update(lit.hparams.normalize)
+    normalizer = Normalizer(lit.hparams.normalize)
     normalizer.fit(train_dataset.data)
     normalizer.transform(train_dataset.data)
     normalizer.transform(test_dataset.data)

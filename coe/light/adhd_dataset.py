@@ -20,7 +20,6 @@ from tqdm import tqdm
 from typing import List, Dict, Tuple
 from nibabel.filebasedimages import ImageFileError
 import pandas as pd
-from data import Normalizer_update
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from pathlib import Path
@@ -262,14 +261,13 @@ class ADHDataModule:
                     if rk not in stats:
                         raise ValueError(f"Missing key '{rk}' in computed stats for normalization method '{key}'")
 
-        self.normalizer = Normalizer_update.from_statistics(stats, method=self.normalize)
 
         self.train_dataset = ADHD_Dataset(self.data_dir, self.train_files, self.label_map, self.time_step, 
                                     self.interpol_method, self.one_channel, self.subset, self.dim_D, 
-                                    self.target_length, self.normalizer, self.num_parcels, self.label_column)
+                                    self.target_length, self.num_parcels, self.label_column)
         self.test_dataset = ADHD_Dataset(self.data_dir, self.test_files, self.label_map, self.time_step, 
                                     self.interpol_method, self.one_channel, self.subset, self.dim_D, 
-                                    self.target_length, self.normalizer, self.num_parcels, self.label_column)
+                                    self.target_length, self.num_parcels, self.label_column)
         
 
     def train_dataloader(self, train_bs):
