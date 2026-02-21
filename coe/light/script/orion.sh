@@ -1,7 +1,7 @@
-export CUDA_VISIBLE_DEVICES=3
+export CUDA_VISIBLE_DEVICES=7
 
 # Invoke your training script with all defaults from memory
-python main.py \
+python model/main.py \
   --train_bs 8 \
   --valid_bs 16 \
   --test_bs 16 \

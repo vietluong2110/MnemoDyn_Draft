@@ -162,7 +162,7 @@ class ABIDEaModule:
         self.subset = subset
         self.dim_D = dim_D
         self.label_column = label_column
-        if label_column == 'age' or 'gender':
+        if self.label_column in ('age', 'gender'):
             labels = [label_map[f][0] for f in file_list]
             self.train_files, self.test_files, train_labels, test_labels = train_test_split(file_list, labels, test_size=0.2, random_state=42)
         else:
