@@ -1,5 +1,7 @@
 import torch 
 import numpy as np 
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
 
 class Normalizer:
     def __init__(self, method='standard'):
@@ -25,11 +27,6 @@ class Normalizer:
         }
         quartiles = np.nanpercentile(X_flat, [25, 75], axis=0)
         self.global_stats['global_iqr'] = (quartiles[1, :] - quartiles[0, :]).tolist()
-
-        # # ✅ Save stats to JSON
-        # with open("global_stats_ukbiobank.json", "w") as f:
-        #     json.dump(self.global_stats, f, indent=2)
-        # print("Saved!!!")
 
         # Initialize scalers for 'standard' and 'minmax' methods
         if self.method in ['standard', 'minmax']:

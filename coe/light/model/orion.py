@@ -159,7 +159,6 @@ class ORionSeq(nn.Module):
                 nn.Linear(64, self.num_classes, bias=True)
             )
         
-        self.count = 0
         self._initialize_weights()
     
     def _get_activation(self, name: str) -> nn.Module:
