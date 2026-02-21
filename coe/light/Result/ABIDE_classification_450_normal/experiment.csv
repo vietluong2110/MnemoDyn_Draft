@@ -1,2 +1,0 @@
-foundation_dir,version,normalize,duration,seq_length,seed,exp,dim_D,num_classes,interpol,train_bs,valid_bs,test_bs,epoch,lr,wd,model_pred_save_freq
-/mnt/vhluong/Result/Orion_450_ukbiobank/debug_GordonHCP/,2,minmax,1,490,2023,Result/ABIDE_classification_450_normal/Results/0,7,2,spline,8,256,4,100,0.001,0.0001,10

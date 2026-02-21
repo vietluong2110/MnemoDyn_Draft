@@ -28,8 +28,8 @@ from plot_save import plot_and_save, manual_set_seed
 from datasets import Fixed_Synthetic_Dataset
 
 import os, glob
-from improve_clde_light import LitHBCRModelOptimized
-from light_GordonHCP_main import Normalizer_update
+from model.main import LitORionModelOptimized
+from model.normalizer import Normalizer 
 from ukbiobank_dataset import UKBioBank_Dataset, load_ukbiobank_file_list
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import f1_score
@@ -60,31 +60,17 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Arguments for CDE in BCR")
     parser.add_argument("--foundation-dir", type=str, required=True, help='Path to your lightning version folder (e.g. robust_scaler..)')
     parser.add_argument("--version", type = int, required=True, help='which version subfolder to load (e.g. 0)')
-    # parser.add_argument('--one_channel', default=1, type=int, help="Use only this dimension")
-    # parser.add_argument('--subset', action='store_true', default=False, help="Use first dim_D channel only")
     parser.add_argument('--normalize', default='minmax', type=str, choices=['standard', 'minmax', 'raw', 'robust_scaler', 'all_patient_all_voxel', 'per_patient_all_voxel',
                         'per_patient_per_voxel', 'per_voxel_all_patient', 'subtract_mean', 'subtract_mean_global_std', 'subtract_mean_99th_percentile'],
                         help='Normalization type: standard (zero mean, unit variance) or minmax (0-1 range)')
     parser.add_argument('--duration', default=1, type=float, help="Time duration of time series")
-
-
-    # # Configuration file path
-    # parser.add_argument('--config_path', type=str, default='./configs/classification/eigenworm.json', help='Path to data configuration file')
-
-    # arguments for dataset
     parser.add_argument('--seq_length', type=int, default=490, help='Total seqeunce length in time series')
-    # parser.add_argument('--data_path', type=str, default='../../../data/', help='Path to data directory for BIDMC32 and Eigenworm dataset. Check README')
-
     parser.add_argument("--seed", default=4741, type=int, help="Setting seed for the entire experiment")
     parser.add_argument("--exp", default='UKBiobank_Sex_classification_450', help="Adjusted in code: Experiment foler name")
-
-
     parser.add_argument('--dim_D', default=7, type=int, help="Dimension of observable variable")
 
     parser.add_argument('--num_classes', default=2, type=int, help="Output dimensionality of regression head")
-    
     parser.add_argument('--interpol', default='spline', type=str, help='Interpolation type to use')
-
     # training arguments
     parser.add_argument('--train_bs', default=64, type=int, help='Batchsize for train loader')
     parser.add_argument('--valid_bs', default=256, type=int, help='Batchsize for valid loader')
@@ -218,7 +204,7 @@ def main():
     )
     logger.info("Test dataset size: %d", len(test_dataset))
     # ─── Normalize (optional) ───────────────────────────────────────────────────────
-    normalizer = Normalizer_update(lit.hparams.normalize)
+    normalizer = Normalizer(lit.hparams.normalize)
     normalizer.fit(train_dataset.data)
     normalizer.transform(train_dataset.data)
     normalizer.transform(test_dataset.data)
@@ -328,14 +314,8 @@ def main():
         with torch.no_grad():
             for x, coeffs, y_true, time in tqdm(test_dl, leave=False):
                 x, coeffs, y_true, time = x.to(device).float(), coeffs.to(device).float(), y_true.to(device), time.to(device).float()
-                # x_pred, y_pred = model(x, coeffs, time_step)
                 with torch.no_grad():
                     U = foundation(x, coeffs, time)  # [B, T, dim_D_out]
-                
-                # features = U[:, -1, :]                     # take final time-step
-                # features = torch.mean(U, dim = 1)
-                # y_pred = regression_head(features)         # [B, 1]
-                # features = torch.mean(U[:, 237:242, :], dim = 1)  
                 features = U[:, -1, :]
                 y_pred = regression_head(features)
                 

@@ -27,15 +27,16 @@ from scipy.stats import pearsonr
 from plot_save import plot_and_save, manual_set_seed
 
 import os, glob
-from main import LitORionModelOptimized
+from model.main import LitORionModelOptimized
 # from hcp_aging_utils import load_bold_data_with_age
 from sklearn.preprocessing import LabelEncoder
 import logging
 from sklearn.preprocessing  import MinMaxScaler
 from sklearn.model_selection import train_test_split
-from light_GordonHCP_main import Normalizer_update
+from model.normalizer import Normalizer
+from ukbiobank_dataset import UKBioBank_Dataset
 from sklearn.metrics import f1_score
-from ukbiobank_dataset import UKBioBankDataModule, load_ukbiobank_file_list_age
+from ukbiobank_dataset import load_ukbiobank_file_list_age
 def parse_args():
 	'''
 	Parse input arguments
@@ -49,31 +50,14 @@ def parse_args():
 						'per_patient_per_voxel', 'per_voxel_all_patient', 'subtract_mean', 'subtract_mean_global_std', 'subtract_mean_99th_percentile'],
 						help='Normalization type: standard (zero mean, unit variance) or minmax (0-1 range)')
 	parser.add_argument('--duration', default=1, type=float, help="Time duration of time series")
-
-
-	# # Configuration file path
-	# parser.add_argument('--config_path', type=str, default='./configs/classification/eigenworm.json', help='Path to data configuration file')
-
 	# arguments for dataset
 	parser.add_argument('--seq_length', type=int, default=490, help='Total seqeunce length in time series')
-	# parser.add_argument('--data_path', type=str, default='../../../data/', help='Path to data directory for BIDMC32 and Eigenworm dataset. Check README')
-
 	# Setting experiment arugments
 	parser.add_argument("--seed", default=4741, type=int, help="Setting seed for the entire experiment")
 	parser.add_argument("--exp", default='UKBioBank_Age_Regression_with_R2_report', help="Adjusted in code: Experiment foler name")
-
-	# Setting model arguments
-	# parser.add_argument('--noise_model', default=False, action='store_true', help='Whether to use noise regularized model')
-	# parser.add_argument('--wave', default='db2', type=str, help='Type of pywavelet')
 	parser.add_argument('--dim_D', default=7, type=int, help="Dimension of observable variable")
-	# parser.add_argument('--dim_D_out', default=1, type=int, help="Dimension of predicte variable")
-	# parser.add_argument('--dim_d', default=3, type=int, help="Latent dimension of evolution")
-	# parser.add_argument('--dim_k', default=3, type=int, help="Dimension of h_theta (first)")
 	parser.add_argument('--num_classes', default=2, type=int, help="Output dimensionality of regression head")
-
 	parser.add_argument('--interpol', default='spline', type=str, help='Interpolation type to use')
-	# parser.add_argument('--use_cheap_sparse_LC', default=True, action='store_false', help='Whether to use sparse Locally connected layer')
-
 	# training arguments
 	parser.add_argument('--train_bs', default=64, type=int, help='Batchsize for train loader')
 	parser.add_argument('--valid_bs', default=256, type=int, help='Batchsize for valid loader')
@@ -175,76 +159,74 @@ def main():
 	lit = LitORionModelOptimized.load_from_checkpoint(ckpt_path, map_location=device)
 	lit.eval()
 	foundation = lit.model.to(device)
-	# ema_state = torch.load(f"{version_dir}/ema_best_val_mse.pt", map_location=device)
-	# foundation.load_state_dict(ema_state, strict=True)  # load EMA params
 	for p in foundation.parameters():
 		p.requires_grad = False
 
 	time_step = time_step.to(device)
 	all_files, label_map_str = load_ukbiobank_file_list_age(
-        'rfMRI_REST1_LR_Atlas_hp2000_clean_Schaefer2018_400Parcels_7Networks_order_Tian_Subcortex_S3.dlabel_parcellated.dtseries.nii',
-        '/mnt/vhluong/ukbiobank_label_path.csv',
-        'Age when attended assessment centre | Instance 2'
-    )
-	logger.info("Total files loaded: %d", len(all_files))
-	# train_files, test_files = train_test_split(all_files, test_size=0.3, random_state=42)
-
-	# logger.info("Train/Test split: %d/%d", len(train_files), len(test_files))
-	# train_dataset = HCPA_Dataset(
-	# 	data_dir='/mnt/sourav/HCPAging/dtseries',
-	# 	file_list=train_files,
-	# 	label_map=label_map,
-	# 	time_step=time_step,
-	# 	interpol=args.interpol,
-	# 	one_channel=None,
-	# 	subset=True,
-	# 	dim_D=333,
-	# 	target_length=args.seq_length,
-
-	# 	num_parcels=352,
-	# )
-	# logger.info("Train dataset size: %d", len(train_dataset))
-
-	# test_dataset = HCPA_Dataset(
-	# 	data_dir='/mnt/sourav/HCPAging/dtseries',
-	# 	file_list=test_files,
-	# 	label_map=label_map,
-	# 	time_step=time_step,
-	# 	interpol=args.interpol,
-	# 	one_channel=None,
-	# 	subset=True,
-	# 	dim_D=333,
-	# 	target_length=args.seq_length,
-	# 	num_parcels=352,
-	# )
-	# logger.info("Test dataset size: %d", len(test_dataset))
-
-	# normalizer = Normalizer_update(lit.hparams.normalize)
-	# normalizer.fit(train_dataset.data)
-	# train_dataset.data = normalizer.transform(train_dataset.data)
-	# test_dataset.data = normalizer.transform(test_dataset.data)
-	# logger.info("Data normalization (%s) applied", lit.hparams.normalize)
-
-	# train_dl = DataLoader(train_dataset, batch_size=args.train_bs, shuffle=True)
-	# test_dl = DataLoader(test_dataset, batch_size=args.test_bs, shuffle=False, drop_last = True)
-
-	hcpa_module = UKBioBankDataModule(
-		file_list = all_files, 
-		label_map = label_map_str, 
-		duration = args.duration,
-		original_length=args.seq_length, 
-		interpol=args.interpol, 
-		target_length=args.seq_length, 
-		num_parcels=450, 
-		one_channel=-1,
-		subset=True,  
-		dim_D=450, 
-		normalize=lit.hparams.normalize,
-		label_column='Age'
+		'rfMRI_REST1_LR_Atlas_hp2000_clean_Schaefer2018_400Parcels_7Networks_order_Tian_Subcortex_S3.dlabel_parcellated.dtseries.nii',
+		'/mnt/vhluong/ukbiobank_label_path.csv',
+		'Age when attended assessment centre | Instance 2'
 	)
-	hcpa_module.setup()
-	train_dl = hcpa_module.train_dataloader(args.train_bs)
-	test_dl = hcpa_module.test_dataloader(args.test_bs)
+	logger.info("Total files loaded: %d", len(all_files))
+
+	# ─── Split train/test ───────────────────────────────────────────────────────────
+	train_files, test_files, train_labels, test_labels = train_test_split(all_files, test_size=0.2, random_state=42)
+	logger.info("Train/Test split: %d/%d", len(train_files), len(test_files))
+	# ─── Instantiate ADNI_Dataset for classification (label_column='researchGroup') ─
+	train_dataset = UKBioBank_Dataset(
+		file_list      = train_files,
+		label_map      = label_map_str,         # now maps rel_path→(grp_idx, age)
+		time_step      = time_step,             # pass in the tensor rather than a float
+		interpol       = args.interpol,
+		one_channel    = -1,
+		subset         = True,                 # or True+dim_D if you want to subselect parcels
+		dim_D          = 450,                  # must be a List[int] if subset=True
+		target_length  = args.seq_length,       # e.g. 1200
+		num_parcels    = 450,                   # make sure this matches whatever your .dtseries really has
+		label_column   = 'sex'        # <-- this makes __getitem__ return grp_idx
+	)
+	logger.info("Train dataset size: %d", len(train_dataset))
+	test_dataset = UKBioBank_Dataset(
+		file_list      = test_files,
+		label_map      = label_map_str,
+		time_step      = time_step,
+		interpol       = args.interpol,
+		one_channel    = -1,
+		subset         = True,
+		dim_D          = 450,
+		target_length  = args.seq_length,
+		num_parcels    = 450,
+		label_column   = 'sex'
+	)
+	logger.info("Test dataset size: %d", len(test_dataset))
+	# ─── Normalize (optional) ───────────────────────────────────────────────────────
+	normalizer = Normalizer(lit.hparams.normalize)
+	normalizer.fit(train_dataset.data)
+	normalizer.transform(train_dataset.data)
+	normalizer.transform(test_dataset.data)
+	logger.info("Data normalization (%s) applied", lit.hparams.normalize)
+
+	# ─── Create DataLoaders ─────────────────────────────────────────────────────────
+	train_dl = DataLoader(train_dataset, batch_size=args.train_bs, shuffle=True)
+	test_dl  = DataLoader(test_dataset, batch_size=args.test_bs, shuffle=False)
+	# # hcpa_module = UKBioBankDataModule(
+	# # 	file_list = all_files, 
+	# # 	label_map = label_map_str, 
+	# # 	duration = args.duration,
+	# # 	original_length=args.seq_length, 
+	# # 	interpol=args.interpol, 
+	# # 	target_length=args.seq_length, 
+	# # 	num_parcels=450, 
+	# # 	one_channel=-1,
+	# # 	subset=True,  
+	# # 	dim_D=450, 
+	# # 	normalize=lit.hparams.normalize,
+	# # 	label_column='Age'
+	# # )
+	# hcpa_module.setup()
+	# train_dl = hcpa_module.train_dataloader(args.train_bs)
+	# test_dl = hcpa_module.test_dataloader(args.test_bs)
 
 	regression_head = nn.Sequential(
 		# 1) 333 → 512
@@ -268,7 +250,7 @@ def main():
 		# final 256 → 1
 		nn.Linear(256, 1),
 		nn.Flatten(start_dim=1),   # → [B, 10]
-    	nn.Linear(490, 600),          # → [B, 1]
+		nn.Linear(490, 600),          # → [B, 1]
 		nn.LayerNorm(600),
 		nn.GELU(),
 		nn.Dropout(0.1),
@@ -301,18 +283,18 @@ def main():
 	optimizer = torch.optim.AdamW(regression_head.parameters(), lr=args.lr, weight_decay=args.wd)
 	# scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1, patience=5)
 	# scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    # optimizer,
-    # mode='min',
-    # factor=0.5,         # drop by ½ instead of ¼
-    # patience=3,         # wait only 3 epochs
-    # threshold=1e-4,     # what “improvement” means
-    # verbose=True
+	# optimizer,
+	# mode='min',
+	# factor=0.5,         # drop by ½ instead of ¼
+	# patience=3,         # wait only 3 epochs
+	# threshold=1e-4,     # what “improvement” means
+	# verbose=True
 	# )
 
 	scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-    optimizer,
-    T_max=args.epoch,     # or total number of iterations
-    eta_min=1e-6          # minimum LR at the end of schedule
+	optimizer,
+	T_max=args.epoch,     # or total number of iterations
+	eta_min=1e-6          # minimum LR at the end of schedule
 	)
 	all_losses = {'train_total_loss': [], 'valid_total_loss': [], 'test_total_loss': []}
 	result_dict = {'train_acc': [], 'test_acc': [],
