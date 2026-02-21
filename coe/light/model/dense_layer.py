@@ -2,14 +2,7 @@
 Implementation of corase layer
 """
 import torch
-import numpy as np
 import torch.nn as nn
-import torch.nn.functional as F
-import math
-from einops import rearrange
-from typing import List, Tuple, Optional
-import torch.utils.checkpoint as checkpoint
-import torch.utils.benchmark as benchmark
 
 class PerChannelDenseEinsum(nn.Module):
     def __init__(self, dim_k, dense_dim, bias=True):

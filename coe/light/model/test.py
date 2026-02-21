@@ -7,7 +7,6 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from main import GordonHCPDataModule, LitORionModelOptimized  # Import from your main file
 from tqdm import tqdm 
-from hcp_dataset_2 import HCPA_Dataset, load_hcp_aging_parcellated_list, HCPADataModule
 
 def process_and_print_metrics(base_dir, version):
     filepath = os.path.join(base_dir, f"version_{version}", "metrics.csv")
@@ -68,29 +67,6 @@ def main():
 
     train_loader = DataLoader(dm.train_dataset, batch_size=train_bs, num_workers=10, drop_last=False)
     val_loader = DataLoader(dm.val_dataset, batch_size=val_bs, num_workers=10, drop_last=False)
-    # all_files, label_map = load_hcp_aging_parcellated_list(
-    #     '/mnt/vhluong/HCPA_with_new_age_sex.csv',
-    #     '/mnt/sourav/HCPAging/dtseries',
-    #     label_column='interview_age',
-    # )
-    # hcpa_module = HCPADataModule(
-    #     tsv_dir = '/mnt/sourav/HCPAging/dtseries', 
-    #     file_list = all_files, 
-    #     label_map = label_map, 
-    #     duration = 1,
-    #     original_length=490, 
-    #     interpol='spline', 
-    #     target_length=490, 
-    #     num_parcels=450, 
-    #     one_channel=-1,
-    #     subset=True,  
-    #     dim_D=450, 
-    #     normalize='robust_scaler'
-    # )
-    # hcpa_module.setup()
-    # train_loader = hcpa_module.train_dataloader(train_bs)
-    # val_loader = hcpa_module.test_dataloader(val_bs)
-
     
     device = 'cuda'
 
@@ -98,25 +74,20 @@ def main():
     for p in model.parameters():
         p.requires_grad = False
 
-    # for x, coeffs, time in tqdm(train_loader, leave=False):
+    for x, coeffs, time in tqdm(train_loader, leave=False):
+            
+        x = x.to(device).float()
+        coeffs    = coeffs.to(device).float()
+        time      = time.to(device).float()
         
-    #     # expect: (x_obs_aug, coeffs, x_target, mask, time) — adapt if yours differs
-    
-    #     x = x.to(device).float()
-    #     coeffs    = coeffs.to(device).float()
-    #     time      = time.to(device).float()
-        
-    #     with torch.no_grad():
-    #         predicted = model(x, coeffs, time)
-    #     np.save(os.path.join(train_output_dir, f"pred_batch_{index}.npy"), predicted.cpu().numpy())
-    #     np.save(os.path.join(train_output_dir, f"orig_batch_{index}.npy"), x.cpu().numpy())
-    #     # np.save(os.path.join(train_output_dir, f"mask_batch_{index}.npy"), mask.cpu().numpy())
-        
-    #     index += 1
+        with torch.no_grad():
+            predicted = model(x, coeffs, time)
+        np.save(os.path.join(train_output_dir, f"pred_batch_{index}.npy"), predicted.cpu().numpy())
+        np.save(os.path.join(train_output_dir, f"orig_batch_{index}.npy"), x.cpu().numpy())        
+        index += 1
   
     index = 0
     for x, coeffs, time in tqdm(val_loader, leave=False):
-         # expect: (x_obs_aug, coeffs, x_target, mask, time) — adapt if yours differs
 
         x = x.to(device).float()
         coeffs    = coeffs.to(device).float()
