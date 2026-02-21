@@ -15,7 +15,6 @@ from pytorch_wavelets import DWT1DForward, DWT1DInverse
 from .conv1d_optimize import VmapRegionConv1D
 from .dense_layer import PerChannelDenseEinsum
 import torchcde
-import pdb
 import time as sys_time
 
 DEBUG = False  # Global toggle
@@ -294,8 +293,8 @@ class ORionSeq(nn.Module):
             prediction = self.prediction_head(output[:, -1, :])
             return output, prediction
         
-        # if self.use_mRLoss:
-        #     return output, mulit_res_approx_loss
+        if self.use_mRLoss:
+            return output, mulit_res_approx_loss
         return output
             
     @torch.cuda.amp.autocast()

@@ -373,13 +373,13 @@ class LitORionModelOptimized(pl.LightningModule):
 		if batch_idx % 25 == 0:  # More frequent than 50
 			torch.cuda.empty_cache()
 		# x, coeff, time = batch
-		x, noised_x, coeff, time = batch
+		x, coeff, time = batch
 		# Use gradient checkpointing for memory efficiency during forward pass
 		with torch.cuda.amp.autocast(enabled=self.trainer.precision == '16-mixed'):
 			if self.args.use_mRLoss:
-				x_pred, mRloss = self(noised_x, coeff, time)
+				x_pred, mRloss = self(x, coeff, time)
 			else:
-				x_pred = self(noised_x, coeff, time)
+				x_pred = self(x, coeff, time)
 				
 		if self.args.use_mRLoss:
 			mse = self.mse_loss(x_pred, x) + mRloss
@@ -412,7 +412,7 @@ class LitORionModelOptimized(pl.LightningModule):
 
 	def validation_step(self, batch, batch_idx):
 		# x, coeff, time = batch
-		x, noised_x, coeff, time = batch
+		x, coeff, time = batch
 		with torch.cuda.amp.autocast(enabled=self.trainer.precision == '16-mixed'):
 			if self.args.use_mRLoss:
 				x_pred, mRloss = self(x, coeff, time)
