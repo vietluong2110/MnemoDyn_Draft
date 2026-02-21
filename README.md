@@ -1,33 +1,23 @@
-# MnemoDyn: Learning Resting State Dynamics from 40K FMRI sequences
+# MnemoDyn: Learning Resting State Dynamics from 40K fMRI Sequences
 
 [[Paper]]() [[Poster]]() [[Slide]]()
 
-### Sourav Pal , Viet Luong, Hoseok Lee, Tingting Dan, Guorong Wu, Richard Davidson, Won Hwa Kim, Vikas Singh
+### Sourav Pal, Viet Luong, Hoseok Lee, Tingting Dan, Guorong Wu, Richard Davidson, Won Hwa Kim, Vikas Singh
 
 ![MnemoDyn architecture](asset/braine-1.png)
 
-Implementation repository for **MnemoDyn** (ICLR 2026): an operator-learning foundation model for resting-state fMRI based on multi-resolution wavelet dynamics and CDE-style temporal modeling.
+MnemoDyn is an operator-learning foundation model for resting-state fMRI, combining multi-resolution wavelet dynamics with CDE-style temporal modeling.
 
+## Update
 
-## What This Repo Contains
+The Hugging Face release will be available soon.
 
-- Pretraining code for MnemoDyn / ORion-style backbones:
-  - `coe/light/model/main.py`
-  - `coe/light/model/main_masked_autoencode.py`
-  - `coe/light/model/main_masked_autoencode_jepa.py`
-  - `coe/light/model/main_denoise.py`
-  - `coe/light/model/orion.py`
-- Core model components:
-  - `coe/light/model/conv1d_optimize.py`
-  - `coe/light/model/dense_layer.py`
-  - `coe/light/model/ema.py`
-  - `coe/light/model/normalizer.py`
-- Downstream fine-tuning / evaluation scripts for multiple datasets:
-  - HBN, ADHD200, ADNI, ABIDE, NKIR, UK Biobank, HCP Aging under `coe/light/*.py`
-- Shell launch scripts:
-  - `coe/light/script/*.sh`
-- Dependency snapshot:
-  - `highdim_req.txt`
+## At A Glance
+
+- Pretraining backbones: `coe/light/model/main.py`, `coe/light/model/main_masked_autoencode.py`, `coe/light/model/main_masked_autoencode_jepa.py`, `coe/light/model/main_denoise.py`, `coe/light/model/orion.py`
+- Core model modules: `coe/light/model/conv1d_optimize.py`, `coe/light/model/dense_layer.py`, `coe/light/model/ema.py`, `coe/light/model/normalizer.py`
+- Downstream tasks: HBN, ADHD200, ADNI, ABIDE, NKIR, UK Biobank, HCP Aging under `coe/light/*.py`
+- Launch scripts: `coe/light/script/*.sh`
 
 ## Repository Layout
 
@@ -49,9 +39,7 @@ Implementation repository for **MnemoDyn** (ICLR 2026): an operator-learning fou
 
 Python 3.10+ is recommended.
 
-### Option A (recommended): `uv`
-
-This repo includes a `pyproject.toml` generated from `highdim_req.txt`.
+### Option A (recommended): uv
 
 ```bash
 uv venv
@@ -59,7 +47,7 @@ source .venv/bin/activate
 uv sync
 ```
 
-### Option B: `pip` + requirements file
+### Option B: pip
 
 ```bash
 python -m venv .venv
@@ -67,100 +55,85 @@ source .venv/bin/activate
 pip install -r highdim_req.txt
 ```
 
-Ensure GPU-enabled PyTorch is correctly installed for your CUDA version (the pinned stack is CUDA-12 oriented).
+Ensure your PyTorch build matches your CUDA stack.
 
 ## Data Expectations
 
-Most training/evaluation scripts expect:
-- preprocessed/parcellated rs-fMRI files (`*.dtseries.nii`)
-- dataset-specific CSV/TSV metadata (labels, demographics, subject IDs)
-- local absolute paths under `/mnt/...` (as currently hardcoded in many scripts)
+Most scripts expect:
 
-Examples in current code:
+- Parcellated rs-fMRI files (`*.dtseries.nii`)
+- Dataset metadata CSV/TSV files (labels, demographics, IDs)
+- Local paths that are often hardcoded in scripts (`/mnt/...`)
+
+Example paths used in code:
+
 - `/mnt/sourav/HBN_dtseries/`
 - `/mnt/sourav/ADHD200_dtseries/`
 - `/mnt/vhluong/...csv`
 
-You will likely need to edit dataset paths inside scripts before running on a new machine.
+If you are running on a new machine, update dataset paths in the training scripts before launching.
 
 ## Quick Start
 
-### 1) Pretrain (masked autoencoding)
-
-From `coe/light/model/`:
+### 1) Inspect pretraining CLIs
 
 ```bash
 cd coe/light/model
-bash ../script/orion_mask_autoencode.sh
-```
-
-Or call directly:
-
-```bash
+python main.py --help
 python main_masked_autoencode.py --help
+python main_masked_autoencode_jepa.py --help
+python main_denoise.py --help
 ```
 
-### 2) Pretrain (masked autoencoding + JEPA)
-
-```bash
-cd coe/light/model
-bash ../script/orion_mask_autoencode_jepa.sh
-```
-
-### 3) Fine-tune downstream (example: HBN classification)
+### 2) Run downstream examples
 
 ```bash
 cd coe/light
-bash script/hbn_classification_450.sh
+bash script/hbn_classification.sh
+bash script/adhd_200_diagnose.sh
 ```
 
-### 4) Fine-tune downstream (example: ADHD200 diagnosis)
+## Common Script Entry Points
 
-```bash
-cd coe/light
-bash script/adhd_200_diagnose_450.sh
-```
+From `coe/light`:
+
+- `bash script/abide_classifcation_normal.sh`
+- `bash script/adhd_200_diagnose.sh`
+- `bash script/adhd_200_sex_classification.sh`
+- `bash script/adni_classification_amyloid.sh`
+- `bash script/adni_classification_sex.sh`
+- `bash script/hbn_classification.sh`
+- `bash script/hbn_regression.sh`
+- `bash script/hcp_aging_450.sh`
+- `bash script/hcp_aging_classification.sh`
+- `bash script/hcp_aging_regress_flanker.sh`
+- `bash script/hcp_aging_regress_neuroticism.sh`
+- `bash script/nkir_classification.sh`
+- `bash script/ukbiobank_age_regression.sh`
+- `bash script/ukbiobank_sex_classification.sh`
 
 ## Typical Workflow
 
-1. Pretrain a foundation checkpoint (`main_masked_autoencode*.py` or related model entrypoint).
-2. Store resulting Lightning checkpoint(s) under a versioned folder.
-3. Fine-tune a downstream head using a dataset-specific script (`*_classification*.py`, `*_regress*.py`).
-4. Log metrics/results to `Result/<ExperimentName>/...`.
-
-<!-- ## Key CLI Patterns
-
-Common downstream arguments include:
-- `--foundation-dir`: directory containing pretrained model versions/checkpoints
-- `--version`: checkpoint version to load
-- `--train_bs`, `--test_bs`
-- `--lr`, `--wd`
-- `--seed`
-- `--normalize`
-
-Use script-specific help for exact options:
-
-```bash
-python coe/light/hbn_classification_450.py --help
-python coe/light/adhd_200_diagnose_450.py --help
-python coe/light/model/main_masked_autoencode.py --help
-``` -->
+1. Pretrain a foundation checkpoint (`coe/light/model/main*.py`).
+2. Save Lightning checkpoints under a versioned results directory.
+3. Fine-tune a downstream head using a task script in `coe/light/`.
+4. Track outputs and metrics under `Result/<ExperimentName>/...`.
 
 ## Notes and Caveats
 
-- This repository is a research draft codebase; modules are not yet fully consolidated.
-- Some scripts reference imports/modules that may require local refactoring depending on your branch state.
-- Several scripts duplicate utility classes (for example `Normalizer_update`) rather than importing a single canonical implementation.
-- Reproducibility depends on matching dataset preprocessing, atlas/parcellation setup, and path conventions used in the scripts.
+- This is a research codebase and is still being consolidated.
+- Some scripts may require branch-specific import/path adjustments.
+- Normalization and dataset utilities are partially duplicated across modules.
+- Reproducibility depends on matching preprocessing, atlas/parcellation, and dataset splits.
 
+## Citation
 
-# Citation
-If you find our paper/code useful, please cite our [paper]() at ICLR 26
+If this work helps your research, please cite:
 
-```
+```bibtex
 @inproceedings{
 pal2026mnemodyn,
-title={MnemoDyn: Learning Resting State Dynamics from  \$40\$K {FMRI} sequences},
+title={MnemoDyn: Learning Resting State Dynamics from  $40$K {FMRI} sequences},
 author={Sourav Pal and Viet Luong and Hoseok Lee and Tingting Dan and Guorong Wu and Richard Davidson and Won Hwa Kim and Vikas Singh},
 booktitle={The Fourteenth International Conference on Learning Representations},
 year={2026},
@@ -168,10 +141,9 @@ url={https://openreview.net/forum?id=zexMILcQOV}
 }
 ```
 
-Shield: [![CC BY-NC 4.0][cc-by-nc-shield]][cc-by-nc]
+[![CC BY-NC 4.0][cc-by-nc-shield]][cc-by-nc]
 
-This work is licensed under a
-[Creative Commons Attribution-NonCommercial 4.0 International License][cc-by-nc].
+This work is licensed under a [Creative Commons Attribution-NonCommercial 4.0 International License][cc-by-nc].
 
 [![CC BY-NC 4.0][cc-by-nc-image]][cc-by-nc]
 
