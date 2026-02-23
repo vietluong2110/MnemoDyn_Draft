@@ -5,7 +5,8 @@ from tabulate import tabulate
 import torch
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
-from main import GordonHCPDataModule, LitORionModelOptimized  # Import from your main file
+# from main import GordonHCPDataModule, LitORionModelOptimized
+from coe.light.model.main import GordonHCPDataModule, LitORionModelOptimized
 from tqdm import tqdm 
 
 def process_and_print_metrics(base_dir, version):
@@ -101,4 +102,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

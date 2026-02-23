@@ -222,8 +222,9 @@ class GordonHCPDataModule(pl.LightningDataModule):
 	def __init__(self, **kwargs):
 		super().__init__()
 		self.args = argparse.Namespace(**kwargs)
-		self.data_dir = "/mnt/vhluong/ukbiobank/processed"
-		self.filename = "rfMRI_REST1_LR_Atlas_hp2000_clean_Schaefer2018_400Parcels_7Networks_order_Tian_Subcortex_S3.dlabel_parcellated.dtseries.nii"
+		# self.data_dir = "/mnt/vhluong/ukbiobank/processed"
+		self.data_dir = "/mnt/sourav/GordonHCP/HCP_Dense"
+		self.filename = "rfMRI_REST1_LR_Atlas_hp2000_clean_Gordon333_FreesurferSubcortical.32k_fs_LR.dtseries_parcellated.dtseries.nii"
 		self.time_step = torch.from_numpy(np.arange(0, self.args.duration, self.args.duration/self.args.original_length)).float()
 		self.subject_dirs = [os.path.join(self.data_dir, d) for d in os.listdir(self.data_dir)
 							 if os.path.isdir(os.path.join(self.data_dir, d))]
@@ -248,7 +249,7 @@ class GordonHCPDataModule(pl.LightningDataModule):
 				else:
 					if self.args.subset:
 						data = data[:, :self.args.D]
-					if data.shape != (490, self.args.D): continue
+					if data.shape != (1200, self.args.D): continue
 				
 				t = torch.tensor(data, dtype=torch.float32)
 				all_samples.append(t)
