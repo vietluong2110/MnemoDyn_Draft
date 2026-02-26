@@ -20,7 +20,7 @@ from tqdm import tqdm
 from typing import List, Dict, Tuple
 
 import pandas as pd
-from data import Normalizer_update
+from model.normalizer import Normalizer
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from pathlib import Path
@@ -139,34 +139,6 @@ class UKBioBank_Dataset(Dataset):
     def __len__(self) -> int:
         return len(self.data)
     
-    def resample_timeseries(self, data, orig_TR=0.8, target_TR=0.735, target_length=490):
-        """
-        Resample a timeseries to match target length and TR.
-
-        Args:
-            data (np.ndarray): shape (T, D) or (T,) where T=478 (timepoints).
-            orig_TR (float): original repetition time (e.g. 0.8s).
-            target_TR (float): desired repetition time (e.g. 0.735s).
-            target_length (int): desired sequence length (e.g. 490).
-
-        Returns:
-            np.ndarray: resampled data of shape (target_length, D).
-        """
-        # Original and target time grids
-        orig_len = data.shape[0]
-        orig_time = np.arange(orig_len) * orig_TR
-        target_time = np.arange(target_length) * target_TR
-
-        # Build interpolation function (per feature if 2D)
-        if data.ndim == 1:
-            f = interp1d(orig_time, data, kind='linear', fill_value="extrapolate")
-            return f(target_time)
-        else:
-            resampled = np.zeros((target_length, data.shape[1]))
-            for d in range(data.shape[1]):
-                f = interp1d(orig_time, data[:, d], kind='linear', fill_value="extrapolate")
-                resampled[:, d] = f(target_time)
-            return resampled
 
 class UKBioBankDataModule:
     def __init__(self,

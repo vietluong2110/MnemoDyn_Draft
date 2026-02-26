@@ -20,7 +20,7 @@ from tqdm import tqdm
 from typing import List, Dict, Tuple
 
 import pandas as pd
-from data import Normalizer_update
+from model.normalizer import Normalizer
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from pathlib import Path
@@ -259,7 +259,7 @@ class HBNDataModule:
                     if rk not in stats:
                         raise ValueError(f"Missing key '{rk}' in computed stats for normalization method '{key}'")
 
-        self.normalizer = Normalizer_update.from_statistics(stats, method=self.normalize)
+        self.normalizer = Normalizer.from_statistics(stats, method=self.normalize)
 
         self.train_dataset = HBN_Dataset(self.data_dir, self.train_files, self.label_map, self.time_step, 
                                     self.interpol_method, self.one_channel, self.subset, self.dim_D, 

@@ -24,13 +24,14 @@ from model.normalizer import Normalizer
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from pathlib import Path
+from glob import glob
 import logging
 
 logger = logging.getLogger(__name__)
 
 import pdb
 
-class NKIR_Dataset(Dataset):
+class Demo_Dataset(Dataset):
     def __init__(
         self,
         data_dir: str,
@@ -132,16 +133,18 @@ class NKIR_Dataset(Dataset):
         coeffs = self.coeffs[idx]     # interpolation coefficients
         label = self.labels[idx]
 
-        
-        # label = self.labels[idx]
-        if label == 1 and np.random.rand() < 0.5:
-            x = x + 0.1 * torch.rand_like(x) 
+        if self.label_column == 'Age':
+            label = self.labels[idx][0]
+        else:
+            label = self.labels[idx][1]
+            if label == 1 and np.random.rand() < 0.5:
+                x = x + 0.1 * torch.rand_like(x) 
         return x, coeffs, label, self.time_step
 
     def __len__(self) -> int:
         return len(self.data)
 
-class NKIRDataModule:
+class DemoDataModule:
     def __init__(self,
                data_dir,
                file_list, 
@@ -257,12 +260,12 @@ class NKIRDataModule:
                     if rk not in stats:
                         raise ValueError(f"Missing key '{rk}' in computed stats for normalization method '{key}'")
 
-        self.normalizer = Normalizer.from_statistics(stats, method=self.normalize)
+        self.normalizer = Normalizer_update.from_statistics(stats, method=self.normalize)
 
-        self.train_dataset = NKIR_Dataset(self.data_dir, self.train_files, self.label_map, self.time_step, 
+        self.train_dataset = Demo_Dataset(self.data_dir, self.train_files, self.label_map, self.time_step, 
                                     self.interpol_method, self.one_channel, self.subset, self.dim_D, 
                                     self.target_length, self.normalizer, self.num_parcels, self.label_column)
-        self.test_dataset = NKIR_Dataset(self.data_dir, self.test_files, self.label_map, self.time_step, 
+        self.test_dataset = Demo_Dataset(self.data_dir, self.test_files, self.label_map, self.time_step, 
                                     self.interpol_method, self.one_channel, self.subset, self.dim_D, 
                                     self.target_length, self.normalizer, self.num_parcels, self.label_column)
         
@@ -282,71 +285,99 @@ def _to_int_or_none(x):
         pass
     return None
 
-def load_nkir_file_list(
+def load_demo_file_list(
     data_dir: str,
     metadata_path: str,
-    label_column: str,   # 'gender' or 'dx'
-    parcellate: int
-) -> Tuple[List[str], Dict[str, Tuple[float, int, int]]]:
+    label_column: str,   # 'age' or 'gender'/'sex'
+    parcellate : int
+) -> Tuple[List[str], Dict[str, Tuple[float, int]]]:
     """
-    Load ADHD paths + labels with filtering by `label_column`.
-
-    Expects CSV columns at least: path, gender, age, dx
-    - If label_column == 'gender': keep rows with gender in {0,1}
-    - If label_column == 'dx':     keep rows with dx in {0,1,2,3}
+    Load ds005747 parcellated dtseries paths and labels from participants.tsv.
 
     Returns:
       valid_file_list: list[str] of relative paths that exist under data_dir
-      label_map: dict[rel_path] -> (age: float, gender: int, dx: int)
+      label_map: dict[rel_path] -> (age: float, sex: int) where sex M=1, F=0
     """
+    if label_column.lower() not in {"age", "gender", "sex"}:
+        raise ValueError("label_column must be one of: 'age', 'gender', 'sex'")
 
-    logger.info("Loading metadata from %s", metadata_path)
-    meta = pd.read_csv(metadata_path)
+    logger.info("Loading participants metadata from %s", metadata_path)
+    sep = "\t" if str(metadata_path).endswith(".tsv") else ","
+    meta = pd.read_csv(metadata_path, sep=sep)
     meta.columns = [c.strip() for c in meta.columns]
 
-    # required = {"file_path", "Sex", "Age_normalized"}
-    # missing = required - set(meta.columns)
-    # if missing:
-    #     raise ValueError(f"Metadata CSV is missing columns: {missing}")
+    required = {"participant_id", "age", "gender"}
+    missing = required - set(meta.columns)
+    if missing:
+        raise ValueError(f"participants file is missing columns: {missing}")
 
-    # Build label map
-    label_map_by_relpath: Dict[str, Tuple[float, int, int]] = {}
+    # Build participant -> (age, sex) map
+    participant_map: Dict[str, Tuple[float, int]] = {}
     for _, row in meta.iterrows():
-        rel = str(row["abs_path"]).strip()
-        rel = rel.replace("/nas/sourav/", "/mnt/sourav/", 1)
-        rel = os.path.join(data_dir, rel)
-        if parcellate == 424 or parcellate == 450:
-            rel = str(rel).replace(
-                '333_parcellated.dtseries.nii',
-                f'{parcellate}_parcellated.dtseries.nii'
-                )
-         
-        sex = int(row['sex'] == 'M')
-       
-        label_map_by_relpath[rel] = (sex)
+        pid = str(row["participant_id"]).strip()
+        if not pid:
+            continue
 
-    logger.info("Metadata entries after filtering: %d", len(label_map_by_relpath))
+        try:
+            age = float(row["age"])
+        except Exception:
+            continue
 
-    # Validate files
+        sex_raw = str(row["gender"]).strip().upper()
+        if sex_raw in {"M", "MALE", "1"}:
+            sex = 1
+        elif sex_raw in {"F", "FEMALE", "0"}:
+            sex = 0
+        else:
+            continue
+
+        participant_map[pid] = (age, sex)
+
+    logger.info("Metadata entries after filtering: %d", len(participant_map))
+
     valid_file_list: List[str] = []
+    label_map: Dict[str, Tuple[float, int]] = {}
     missing_files: List[str] = []
 
-    for rel in tqdm(label_map_by_relpath.keys(), desc="Validating files"):
-        if os.path.isfile(rel):
-            valid_file_list.append(rel)
-        else:
-            missing_files.append(rel)
+    for pid, labels in tqdm(participant_map.items(), desc="Matching files"):
+        subj_dir = os.path.join(data_dir, pid)
+        if not os.path.isdir(subj_dir):
+            missing_files.append(f"{pid}: subject directory not found")
+            continue
+
+        candidates = sorted(glob(os.path.join(subj_dir, "*_parcellated.dtseries.nii")))
+        if not candidates:
+            missing_files.append(f"{pid}: no parcellated dtseries file")
+            continue
+
+        chosen = None
+        for c in candidates:
+            try:
+                if int(nib.load(c).shape[1]) == int(parcellate):
+                    chosen = c
+                    break
+            except Exception:
+                continue
+
+        if chosen is None:
+            missing_files.append(
+                f"{pid}: no parcellated file with {parcellate} parcels (found {len(candidates)} candidates)"
+            )
+            continue
+
+        rel_path = os.path.relpath(chosen, data_dir)
+        valid_file_list.append(rel_path)
+        label_map[rel_path] = labels
 
     if missing_files:
         logger.warning(
-            "Paths not found on disk (%d). Showing up to 5:\n%s",
+            "Unmatched participants/files (%d). Showing up to 5:\n%s",
             len(missing_files),
             "\n".join(missing_files[:5]) + ("...\n" if len(missing_files) > 5 else "")
         )
 
     if not valid_file_list:
-        raise RuntimeError("No valid .dtseries.nii files found matching metadata.")
+        raise RuntimeError("No valid parcellated .dtseries.nii files found from participants metadata.")
 
-    label_map = {rel: label_map_by_relpath[rel] for rel in valid_file_list}
     logger.info("Valid files: %d", len(valid_file_list))
     return valid_file_list, label_map

@@ -1,0 +1,10 @@
+# Project artifacts
+coe/light/Result/
+
+# Python caches/bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Notebook checkpoints
+.ipynb_checkpoints/
