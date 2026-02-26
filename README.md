@@ -12,6 +12,8 @@ MnemoDyn is an operator-learning foundation model for resting-state fMRI, combin
 
 The Hugging Face release will be available soon.
 
+You can also publish your own trained checkpoint directly from this repo.
+
 ## At A Glance
 
 - Pretraining backbones: `coe/light/model/main.py`, `coe/light/model/main_masked_autoencode.py`, `coe/light/model/main_masked_autoencode_jepa.py`, `coe/light/model/main_denoise.py`, `coe/light/model/orion.py`
@@ -118,6 +120,49 @@ From `coe/light`:
 2. Save Lightning checkpoints under a versioned results directory.
 3. Fine-tune a downstream head using a task script in `coe/light/`.
 4. Track outputs and metrics under `Result/<ExperimentName>/...`.
+
+## Publish to Hugging Face
+
+Install Hub client:
+
+```bash
+pip install huggingface_hub
+```
+
+Log in once:
+
+```bash
+huggingface-cli login
+```
+
+Publish a training run folder (auto-picks best checkpoint by lowest `val_mae` in filename):
+
+```bash
+python -m coe.light.model.publish_to_hf \
+  --repo-id <your-hf-username>/<model-name> \
+  --version-dir /path/to/version_17
+```
+
+Or publish an explicit checkpoint:
+
+```bash
+python -m coe.light.model.publish_to_hf \
+  --repo-id <your-hf-username>/<model-name> \
+  --checkpoint /path/to/model.ckpt \
+  --hparams /path/to/hparams.yaml \
+  --metrics /path/to/metrics.csv
+```
+
+Load it back:
+
+```python
+from huggingface_hub import hf_hub_download
+from coe.light.model.main import LitORionModelOptimized
+
+ckpt = hf_hub_download(repo_id="<your-hf-username>/<model-name>", filename="model.ckpt")
+model = LitORionModelOptimized.load_from_checkpoint(ckpt, map_location="cpu")
+model.eval()
+```
 
 ## Notes and Caveats
 

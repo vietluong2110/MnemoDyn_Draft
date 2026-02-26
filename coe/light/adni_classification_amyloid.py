@@ -22,14 +22,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import logging
-from main import LitORionModelOptimized
+from model.main import LitORionModelOptimized
 
 from plot_save import plot_and_save, manual_set_seed
-from datasets import Fixed_Synthetic_Dataset
 
 import os, glob
-from improve_clde_light import LitHBCRModelOptimized
-from light_GordonHCP_main import Normalizer_update
+from model.normalizer import Normalizer
 from adni_dataset import ADNI_Dataset, load_adni_file_list, load_adni_amyloid_file_list
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import f1_score
@@ -214,10 +212,10 @@ def main():
 	)
 	logger.info("Test dataset size: %d", len(test_dataset))
 	# ─── Normalize (optional) ───────────────────────────────────────────────────────
-	normalizer = Normalizer_update(lit.hparams.normalize)
+	normalizer = Normalizer(lit.hparams.normalize)
 	normalizer.fit(train_dataset.data)
-	train_dataset.data = normalizer.transform(train_dataset.data)
-	test_dataset.data = normalizer.transform(test_dataset.data)
+	normalizer.transform(train_dataset.data)
+	normalizer.transform(test_dataset.data)
 	logger.info("Data normalization (%s) applied", lit.hparams.normalize)
 
 	# ─── Create DataLoaders ─────────────────────────────────────────────────────────

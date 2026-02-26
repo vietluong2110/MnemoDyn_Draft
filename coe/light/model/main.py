@@ -10,7 +10,6 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from tqdm import tqdm
 import torchcde
 import torch.nn as nn
-sys.path.append('../../')
 from .orion import create_stacked_ORion_model
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp.wrap import size_based_auto_wrap_policy, transformer_auto_wrap_policy

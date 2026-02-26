@@ -171,7 +171,7 @@ def main():
 	logger.info("Total files loaded: %d", len(all_files))
 
 	# ─── Split train/test ───────────────────────────────────────────────────────────
-	train_files, test_files, train_labels, test_labels = train_test_split(all_files, test_size=0.2, random_state=42)
+	train_files, test_files = train_test_split(all_files, test_size=0.2, random_state=42)
 	logger.info("Train/Test split: %d/%d", len(train_files), len(test_files))
 	# ─── Instantiate ADNI_Dataset for classification (label_column='researchGroup') ─
 	train_dataset = UKBioBank_Dataset(

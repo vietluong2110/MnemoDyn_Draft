@@ -8,6 +8,7 @@ import pytorch_lightning as pl
 # from main import GordonHCPDataModule, LitORionModelOptimized
 from coe.light.model.main import GordonHCPDataModule, LitORionModelOptimized
 from tqdm import tqdm 
+from huggingface_hub import hf_hub_download
 
 def process_and_print_metrics(base_dir, version):
     filepath = os.path.join(base_dir, f"version_{version}", "metrics.csv")
@@ -44,11 +45,14 @@ def main():
     dm.setup(stage='fit')  # Setup both train and val splits
     
     # Load the best checkpoint based on minimum val_mae
-    checkpoint_dir = os.path.join(args.base_dir, f"version_{args.version}", "checkpoints")
-    checkpoints = [os.path.join(checkpoint_dir, f) for f in os.listdir(checkpoint_dir) if f.endswith('.ckpt')]
-    checkpoint_path = min(checkpoints, key=lambda x: float(x.split('-val_mae=')[1].split('.ckpt')[0]))
-    print("Loading model from:", checkpoint_path)
-    model = LitORionModelOptimized.load_from_checkpoint(checkpoint_path)
+    # checkpoint_dir = os.path.join(args.base_dir, f"version_{args.version}", "checkpoints")
+    # checkpoints = [os.path.join(checkpoint_dir, f) for f in os.listdir(checkpoint_dir) if f.endswith('.ckpt')]
+    # checkpoint_path = min(checkpoints, key=lambda x: float(x.split('-val_mae=')[1].split('.ckpt')[0]))
+    
+    # print("Loading model from:", checkpoint_path)
+    # model = LitORionModelOptimized.load_from_checkpoint(checkpoint_path)
+    ckpt_path = hf_hub_download(repo_id="vhluong/MnemoDyn", filename="model.ckpt", revision="main")
+    model = LitORionModelOptimized.load_from_checkpoint(ckpt_path, map_location="cpu")
     model.eval()
     
     base_output_dir = os.path.join(args.base_dir, f"version_{args.version}")

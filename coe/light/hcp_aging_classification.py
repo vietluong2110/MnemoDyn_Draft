@@ -26,12 +26,13 @@ from torch.utils.data import DataLoader
 from plot_save import plot_and_save, manual_set_seed
 
 import os, glob
-from main import LitORionModelOptimized
+from model.main import LitORionModelOptimized
 # from hcp_aging_utils import load_bold_data_with_age
 from sklearn.preprocessing import LabelEncoder
 import logging
 from sklearn.model_selection import train_test_split
-from light_GordonHCP_main import Normalizer_update
+# from light_GordonHCP_main import Normalizer_update
+from model.normalizer import Normalizer 
 from sklearn.metrics import f1_score
 from hcp_dataset import HCPA_Dataset, load_hcp_aging_parcellated_list
 def parse_args():
@@ -220,7 +221,7 @@ def main():
 	)
 	logger.info("Test dataset size: %d", len(test_dataset))
 
-	normalizer = Normalizer_update(lit.hparams.normalize)
+	normalizer = Normalizer(lit.hparams.normalize)
 	normalizer.fit(train_dataset.data)
 	normalizer.transform(train_dataset.data)
 	normalizer.transform(test_dataset.data)
