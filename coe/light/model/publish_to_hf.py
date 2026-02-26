@@ -47,6 +47,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--revision", default="main", help="Target branch/revision")
     parser.add_argument("--token", default=None, help="HF token. If omitted, uses HF_TOKEN env var or cached login")
     parser.add_argument("--commit-message", default="Add MnemoDyn checkpoint", help="Commit message")
+    parser.add_argument(
+        "--remote-subdir",
+        default=None,
+        help=(
+            "Remote folder inside the HF repo (e.g. Orion_333). "
+            "If omitted and --version-dir is provided, defaults to a sensible name "
+            "(parent folder for lightning 'version_*' dirs, otherwise version-dir name)."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -98,7 +107,24 @@ def resolve_paths(args: argparse.Namespace) -> tuple[Path, Path | None, Path | N
     return ckpt, hparams, metrics
 
 
-def build_model_card(args: argparse.Namespace, ckpt_name: str) -> str:
+def infer_remote_subdir(args: argparse.Namespace) -> str | None:
+    if args.remote_subdir:
+        return args.remote_subdir.strip("/").strip()
+    if args.version_dir is not None:
+        version_name = args.version_dir.name
+        # Common Lightning layout: .../<experiment>/version_17
+        # Prefer the experiment folder name so uploads group by model family.
+        if re.fullmatch(r"version_\d+", version_name) and args.version_dir.parent != args.version_dir:
+            return args.version_dir.parent.name
+        return version_name
+    return None
+
+
+def build_model_card(args: argparse.Namespace, ckpt_name: str, remote_subdir: str | None) -> str:
+    ckpt_remote = f"{remote_subdir}/model.ckpt" if remote_subdir else "model.ckpt"
+    hparams_remote = f"{remote_subdir}/hparams.yaml" if remote_subdir else "hparams.yaml"
+    metrics_remote = f"{remote_subdir}/metrics.csv" if remote_subdir else "metrics.csv"
+    loader_remote = f"{remote_subdir}/load_from_hf.py" if remote_subdir else "load_from_hf.py"
     return f"""---
 license: {args.license}
 library_name: pytorch-lightning
@@ -118,23 +144,25 @@ This repository contains a MnemoDyn checkpoint exported from this codebase.
 - Source checkpoint: `{ckpt_name}`
 - Dataset: `{args.dataset}`
 - Model class: `{args.model_class}`
+- Remote directory: `{remote_subdir or "(repo root)"}`
 
 ## Files
 
-- `model.ckpt`: Lightning checkpoint
-- `hparams.yaml`: training hyperparameters (if available)
-- `metrics.csv`: training/validation metrics (if available)
-- `load_from_hf.py`: minimal loading script
+- `{ckpt_remote}`: Lightning checkpoint
+- `{hparams_remote}`: training hyperparameters (if available)
+- `{metrics_remote}`: training/validation metrics (if available)
+- `{loader_remote}`: minimal loading script
 
 ## Usage
 
 ```bash
-python load_from_hf.py --repo_id {args.repo_id}
+python {loader_remote} --repo_id {args.repo_id}
 ```
 """
 
 
-def build_loader_script() -> str:
+def build_loader_script(remote_subdir: str | None) -> str:
+    remote_ckpt = f"{remote_subdir}/model.ckpt" if remote_subdir else "model.ckpt"
     return """#!/usr/bin/env python3
 import argparse
 from huggingface_hub import hf_hub_download
@@ -147,7 +175,7 @@ def main():
     parser.add_argument("--revision", default="main")
     args = parser.parse_args()
 
-    ckpt_path = hf_hub_download(repo_id=args.repo_id, filename="model.ckpt", revision=args.revision)
+    ckpt_path = hf_hub_download(repo_id=args.repo_id, filename="%s", revision=args.revision)
     model = LitORionModelOptimized.load_from_checkpoint(ckpt_path, map_location="cpu")
     model.eval()
     print("Loaded model from", ckpt_path)
@@ -155,12 +183,13 @@ def main():
 
 if __name__ == "__main__":
     main()
-"""
+""" % remote_ckpt
 
 
 def main() -> None:
     args = parse_args()
     ckpt, hparams, metrics = resolve_paths(args)
+    remote_subdir = infer_remote_subdir(args)
 
     token = args.token or os.getenv("HF_TOKEN")
 
@@ -179,8 +208,8 @@ def main() -> None:
         if metrics is not None:
             shutil.copy2(metrics, tmp_path / "metrics.csv")
 
-        (tmp_path / "README.md").write_text(build_model_card(args, ckpt.name))
-        (tmp_path / "load_from_hf.py").write_text(build_loader_script())
+        (tmp_path / "README.md").write_text(build_model_card(args, ckpt.name, remote_subdir))
+        (tmp_path / "load_from_hf.py").write_text(build_loader_script(remote_subdir))
 
         api = HfApi(token=token)
         api.create_repo(repo_id=args.repo_id, repo_type="model", private=args.private, exist_ok=True)
@@ -188,6 +217,7 @@ def main() -> None:
             repo_id=args.repo_id,
             repo_type="model",
             folder_path=str(tmp_path),
+            path_in_repo=remote_subdir,
             revision=args.revision,
             commit_message=args.commit_message,
         )

@@ -51,8 +51,8 @@ def main():
     
     # print("Loading model from:", checkpoint_path)
     # model = LitORionModelOptimized.load_from_checkpoint(checkpoint_path)
-    ckpt_path = hf_hub_download(repo_id="vhluong/MnemoDyn", filename="model.ckpt", revision="main")
-    model = LitORionModelOptimized.load_from_checkpoint(ckpt_path, map_location="cpu")
+    ckpt_path = hf_hub_download(repo_id="vhluong/MnemoDyn", filename="Orion_333/model.ckpt", revision="main")
+    model = LitORionModelOptimized.load_from_checkpoint(ckpt_path)
     model.eval()
     
     base_output_dir = os.path.join(args.base_dir, f"version_{args.version}")
