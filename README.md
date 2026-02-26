@@ -10,9 +10,13 @@ MnemoDyn is an operator-learning foundation model for resting-state fMRI, combin
 
 ## Update
 
-The Hugging Face release will be available soon.
+MnemoDyn is now published on Hugging Face: https://huggingface.co/vhluong/MnemoDyn
 
 You can also publish your own trained checkpoint directly from this repo.
+
+## Tutorial
+
+A usage walkthrough is available in `tutorial.ipynb` at the repository root.
 
 ## At A Glance
 
