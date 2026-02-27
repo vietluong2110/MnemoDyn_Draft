@@ -63,21 +63,38 @@ pip install -r highdim_req.txt
 
 Ensure your PyTorch build matches your CUDA stack.
 
-## Data Expectations
+<!-- ## Data Processing Flow
 
-Most scripts expect:
+MnemoDyn expects parcellated rs-fMRI time series data (`*.dtseries.nii`) as input.
 
-- Parcellated rs-fMRI files (`*.dtseries.nii`)
-- Dataset metadata CSV/TSV files (labels, demographics, IDs)
-- Local paths that are often hardcoded in scripts (`/mnt/...`)
+If you are starting from volumetric NIfTI files (e.g., from fMRIPrep), you must run them through our **Preprocessing Pipeline** (described above) before training. This ensures proper alignment and time-step continuity.
 
-Example paths used in code:
+To use custom datasets:
+1. Preprocess your NIfTI files through `coe.preprocess.pipeline`.
+2. Ensure you have dataset metadata CSV/TSV files (labels, demographics, IDs).
+3. Update the hardcoded dataset paths (e.g., `/mnt/sourav/HBN_dtseries/`) in the downstream training launch scripts (`coe/light/script/*.sh`) to point to your new output directories. -->
 
-- `/mnt/sourav/HBN_dtseries/`
-- `/mnt/sourav/ADHD200_dtseries/`
-- `/mnt/vhluong/...csv`
+## Preprocessing Pipeline (NIfTI to Parcellated CIFTI)
 
-If you are running on a new machine, update dataset paths in the training scripts before launching.
+We provide a unified, Python-based CLI pipeline to automate mapping volumetric NIfTI images to fs_LR surfaces and parcellating the resulting dense time series. The pipeline dynamically extracts the Repetition Time (TR) from your NIfTI files to ensure downstream models learn accurate temporal dynamics.
+
+### Requirements
+- Connectome Workbench (`wb_command`) installed and on your system PATH.
+- `nibabel` and `tqdm` Python packages.
+
+### Usage
+Run the pipeline from the repository root:
+
+```bash
+python -m coe.preprocess.pipeline \
+  --input-dir /path/to/niftis \
+  --output-dir /path/to/output_dir \
+  --atlas /path/to/atlas.dlabel.nii \
+  --pattern "*_task-rest_space-MNI305_preproc.nii.gz"
+```
+
+The script will automatically orchestrate `wb_command` for left/right mapping and resampling, output an intermediate `.dtseries.nii`, and finally parcellate it using the provided atlas, injecting the correct native TR throughout.
+
 
 ## Quick Start
 
@@ -91,7 +108,13 @@ python main_masked_autoencode_jepa.py --help
 python main_denoise.py --help
 ```
 
-### 2) Run downstream examples
+### 2) Pretraining
+
+```bash
+bash orion.sh
+```
+
+### 3) Run downstream examples
 
 ```bash
 cd coe/light
@@ -99,7 +122,7 @@ bash script/hbn_classification.sh
 bash script/adhd_200_diagnose.sh
 ```
 
-## Common Script Entry Points
+<!-- ## Common Script Entry Points
 
 From `coe/light`:
 
@@ -116,7 +139,7 @@ From `coe/light`:
 - `bash script/hcp_aging_regress_neuroticism.sh`
 - `bash script/nkir_classification.sh`
 - `bash script/ukbiobank_age_regression.sh`
-- `bash script/ukbiobank_sex_classification.sh`
+- `bash script/ukbiobank_sex_classification.sh` -->
 
 ## Typical Workflow
 
@@ -125,7 +148,7 @@ From `coe/light`:
 3. Fine-tune a downstream head using a task script in `coe/light/`.
 4. Track outputs and metrics under `Result/<ExperimentName>/...`.
 
-## Publish to Hugging Face
+<!-- ## Publish to Hugging Face
 
 Install Hub client:
 
@@ -166,7 +189,7 @@ from coe.light.model.main import LitORionModelOptimized
 ckpt = hf_hub_download(repo_id="<your-hf-username>/<model-name>", filename="model.ckpt")
 model = LitORionModelOptimized.load_from_checkpoint(ckpt, map_location="cpu")
 model.eval()
-```
+``` -->
 
 ## Notes and Caveats
 
