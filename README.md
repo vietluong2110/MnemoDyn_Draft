@@ -18,7 +18,7 @@ You can also publish your own trained checkpoint directly from this repo.
 
 A usage walkthrough is available as a Google Colab notebook:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://drive.google.com/file/d/1IeWYPmwZAj5zA_khQHmgKOXjF8DJXVNo/view?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1IeWYPmwZAj5zA_khQHmgKOXjF8DJXVNo?usp=sharing)
 
 ## At A Glance
 
