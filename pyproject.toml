@@ -50,7 +50,7 @@ dependencies = [
   "nest_asyncio==1.6.0",
   "networkx==3.4.2",
   "nibabel==5.3.2",
-  "numpy==2.2.3",
+  "numpy==2.0.0",
   "nvidia-cublas-cu12==12.4.5.8",
   "nvidia-cuda-cupti-cu12==12.4.127",
   "nvidia-cuda-nvrtc-cu12==12.4.127",
