@@ -88,11 +88,20 @@ We provide a unified, Python-based CLI pipeline to automate mapping volumetric N
 Run the pipeline from the repository root:
 
 ```bash
+# Sequential Processing (Safe for Colab/Low RAM)
 python -m coe.preprocess.pipeline \
   --input-dir /path/to/niftis \
   --output-dir /path/to/output_dir \
   --atlas /path/to/atlas.dlabel.nii \
   --pattern "*_task-rest_space-MNI305_preproc.nii.gz"
+
+# Parallel Processing (Recommended for powerful local machines)
+python -m coe.preprocess.pipeline_parallel \
+  --input-dir /path/to/niftis \
+  --output-dir /path/to/output_dir \
+  --atlas /path/to/atlas.dlabel.nii \
+  --pattern "*_task-rest_space-MNI305_preproc.nii.gz" \
+  --jobs 8  # Number of concurrent subjects. Warning: Highly memory intensive.
 ```
 
 The script will automatically orchestrate `wb_command` for left/right mapping and resampling, output an intermediate `.dtseries.nii`, and finally parcellate it using the provided atlas, injecting the correct native TR throughout.
@@ -193,12 +202,12 @@ model = LitORionModelOptimized.load_from_checkpoint(ckpt, map_location="cpu")
 model.eval()
 ``` -->
 
-## Notes and Caveats
+<!-- ## Notes and Caveats
 
 - This is a research codebase and is still being consolidated.
 - Some scripts may require branch-specific import/path adjustments.
 - Normalization and dataset utilities are partially duplicated across modules.
-- Reproducibility depends on matching preprocessing, atlas/parcellation, and dataset splits.
+- Reproducibility depends on matching preprocessing, atlas/parcellation, and dataset splits. -->
 
 ## Citation
 
