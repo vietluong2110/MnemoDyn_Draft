@@ -16,7 +16,9 @@ You can also publish your own trained checkpoint directly from this repo.
 
 ## Tutorial
 
-A usage walkthrough is available in `tutorial.ipynb` at the repository root.
+A usage walkthrough is available as a Google Colab notebook:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://drive.google.com/file/d/1IeWYPmwZAj5zA_khQHmgKOXjF8DJXVNo/view?usp=sharing)
 
 ## At A Glance
 
