@@ -1,4 +1,4 @@
-# MnemoDyn: Learning Resting State Dynamics from 40K fMRI Sequences
+# 🧠 MnemoDyn: Learning Resting State Dynamics from 40K fMRI Sequences
 
 [[Paper]]() [[Poster]]() [[Slide]]()
 
@@ -8,26 +8,26 @@
 
 MnemoDyn is an operator-learning foundation model for resting-state fMRI, combining multi-resolution wavelet dynamics with CDE-style temporal modeling.
 
-## Update
+## 🚀 Update
 
 MnemoDyn is now published on Hugging Face: https://huggingface.co/vhluong/MnemoDyn
 
 You can also publish your own trained checkpoint directly from this repo.
 
-## Tutorial
+## 📚 Tutorial
 
 A usage walkthrough is available as a Google Colab notebook:
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1kQQxASFWHl9J0W1UHDpF2jvWcX3mrXz4)
 
-## At A Glance
+## 🌟 At A Glance
 
 - Pretraining backbones: `coe/light/model/main.py`, `coe/light/model/main_masked_autoencode.py`, `coe/light/model/main_masked_autoencode_jepa.py`, `coe/light/model/main_denoise.py`, `coe/light/model/orion.py`
 - Core model modules: `coe/light/model/conv1d_optimize.py`, `coe/light/model/dense_layer.py`, `coe/light/model/ema.py`, `coe/light/model/normalizer.py`
 - Downstream tasks: HBN, ADHD200, ADNI, ABIDE, NKIR, UK Biobank, HCP Aging under `coe/light/*.py`
 - Launch scripts: `coe/light/script/*.sh`
 
-## Repository Layout
+## 📁 Repository Layout
 
 ```text
 .
@@ -43,11 +43,11 @@ A usage walkthrough is available as a Google Colab notebook:
 └── README.md
 ```
 
-## Environment Setup
+## ⚙️ Environment Setup
 
 Python 3.10+ is recommended.
 
-### Option A (recommended): uv
+### 🚀 Option A (recommended): uv
 
 ```bash
 uv venv
@@ -55,7 +55,7 @@ source .venv/bin/activate
 uv sync
 ```
 
-### Option B: pip
+### 📦 Option B: pip
 
 ```bash
 python -m venv .venv
@@ -76,15 +76,15 @@ To use custom datasets:
 2. Ensure you have dataset metadata CSV/TSV files (labels, demographics, IDs).
 3. Update the hardcoded dataset paths (e.g., `/mnt/sourav/HBN_dtseries/`) in the downstream training launch scripts (`coe/light/script/*.sh`) to point to your new output directories. -->
 
-## Preprocessing Pipeline (NIfTI to Parcellated CIFTI)
+## 🔄 Preprocessing Pipeline (NIfTI to Parcellated CIFTI)
 
 We provide a unified, Python-based CLI pipeline to automate mapping volumetric NIfTI images to fs_LR surfaces and parcellating the resulting dense time series. The pipeline dynamically extracts the Repetition Time (TR) from your NIfTI files to ensure downstream models learn accurate temporal dynamics.
 
-### Requirements
+### 📋 Requirements
 - Connectome Workbench (`wb_command`) installed and on your system PATH.
 - `nibabel` and `tqdm` Python packages.
 
-### Usage
+### 💻 Usage
 Run the pipeline from the repository root:
 
 ```bash
@@ -107,9 +107,9 @@ python -m coe.preprocess.pipeline_parallel \
 The script will automatically orchestrate `wb_command` for left/right mapping and resampling, output an intermediate `.dtseries.nii`, and finally parcellate it using the provided atlas, injecting the correct native TR throughout.
 
 
-## Quick Start
+## ⚡ Quick Start
 
-### 1) Inspect pretraining CLIs
+### 🔍 1) Inspect pretraining CLIs
 
 ```bash
 cd coe/light/model
@@ -119,13 +119,13 @@ python main_masked_autoencode_jepa.py --help
 python main_denoise.py --help
 ```
 
-### 2) Pretraining
+### 🏋️ 2) Pretraining
 
 ```bash
 bash orion.sh
 ```
 
-### 3) Run downstream examples
+### 🏃 3) Run downstream examples
 
 ```bash
 cd coe/light
@@ -152,7 +152,7 @@ From `coe/light`:
 - `bash script/ukbiobank_age_regression.sh`
 - `bash script/ukbiobank_sex_classification.sh` -->
 
-## Typical Workflow
+## 🛠️ Typical Workflow
 
 1. Pretrain a foundation checkpoint (`coe/light/model/main*.py`).
 2. Save Lightning checkpoints under a versioned results directory.
@@ -209,7 +209,7 @@ model.eval()
 - Normalization and dataset utilities are partially duplicated across modules.
 - Reproducibility depends on matching preprocessing, atlas/parcellation, and dataset splits. -->
 
-## Citation
+## 📖 Citation
 
 If this work helps your research, please cite:
 
